@@ -1,1 +1,0 @@
-{"id": "vid", "nome": "Motor de Vídeos", "descricao": "Monta vídeos em MP4 a partir do pedido.", "formatos": ["mp4"], "nota": "v0: abertura animada com o título do pedido, até 60 s, em MP4 (H.264). Requer FFmpeg instalado."}
