@@ -1,0 +1,1 @@
+{"name":"vecorion-engine","version":"1.0.0","description":"Vecorion Engine: Core e motores iniciais (sem dependências externas)","private":true,"engines":{"node":">=18"},"scripts":{"start":"node core/server.js","test":"node tests/test.js"}}

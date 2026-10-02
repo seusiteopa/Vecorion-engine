@@ -1,0 +1,18 @@
+# Netlify serve só a interface e encaminha /api/* para o Core (servidor com FFmpeg).
+# TROQUE a URL abaixo pela do seu Core (Render, Railway, Fly...), sem barra no final.
+[build]
+  publish = "interface"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://SEU-CORE.exemplo.com/api/:splat"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+    Content-Security-Policy = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'"
