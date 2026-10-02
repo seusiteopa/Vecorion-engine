@@ -1,0 +1,53 @@
+'use strict';
+const {spawn}=require('child_process'),path=require('path'),os=require('os'),fs=require('fs');
+const dados=fs.mkdtempSync(path.join(os.tmpdir(),'vec-'));
+const sv=spawn('node',[path.join(__dirname,'..','core','server.js')],{env:{...process.env,PORT:'0',VECORION_DATA:dados,VECORION_RITMO_MS:"15",VECORION_ORIGENS:'app.exemplo.com'}});
+let ok=0,bad=0;const T=(n,c)=>{c?ok++:bad++;console.log((c?'PASSOU ':'FALHOU ')+n)};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+sv.stdout.once('data',async d=>{const B=String(d).match(/http:\/\/\S+/)[0];
+ const J=(u,m='GET',b,h={})=>fetch(B+u,{method:m,headers:{'Content-Type':'application/json',...h},body:b===undefined?undefined:JSON.stringify(b)});
+ const fim=async id=>{for(let i=0;i<150;i++){const p=await(await J('/api/projetos/'+id)).json();if(['ok','fail','cancel'].includes(p.st))return p;await sleep(20)}};
+ try{
+ let r=await J('/');T('interface servida com CSP',r.status===200&&/default-src/.test(r.headers.get('content-security-policy')||'')&&r.headers.get('x-content-type-options')==='nosniff');
+ const m=await(await J('/api/motores')).json();const TEM_FF=require('../motores/vid/index.js').disponivel();T('3 motores; vídeo disponível só com FFmpeg',m.length===3&&m.find(x=>x.id==='vid').estado===(TEM_FF?'disponivel':'indisponivel')&&m.find(x=>x.id==='site').estado==='disponivel');
+ let p=await(await J('/api/pedidos','POST',{texto:'Um site para minha empresa'})).json();p=await fim(p.id);
+ T('site: concluído com index.html',p.st==='ok'&&p.arquivos.some(a=>a.nome==='index.html'));
+ r=await J('/api/projetos/'+p.id+'/arquivos/index.html');const h=await r.text();T('download com attachment + sandbox',r.status===200&&/attachment/.test(r.headers.get('content-disposition'))&&r.headers.get('content-security-policy')==='sandbox'&&/<html/.test(h));
+ let x=await(await J('/api/pedidos','POST',{texto:'<script>alert(1)</script> site'})).json();x=await fim(x.id);const hx=await(await J('/api/projetos/'+x.id+'/arquivos/index.html')).text();
+ T('XSS escapado no HTML gerado',!/<script>alert/.test(hx)&&/&lt;script&gt;/.test(hx));
+ let i=await(await J('/api/pedidos','POST',{texto:'Imagens para campanha',modo:'Imagens'})).json();i=await fim(i.id);const sv1=await(await J('/api/projetos/'+i.id+'/arquivos/imagem.svg')).text();
+ let i2=await(await J('/api/pedidos','POST',{texto:'Imagens para campanha',modo:'Imagens'})).json();i2=await fim(i2.id);const sv2=await(await J('/api/projetos/'+i2.id+'/arquivos/imagem.svg')).text();
+ T('imagem: SVG válido e determinístico (mesmo pedido, mesmo arquivo)',i.st==='ok'&&/<svg/.test(sv1)&&sv1===sv2);
+ let v=await(await J('/api/pedidos','POST',{texto:'Crie um vídeo de 30 minutos'})).json();v=await fim(v.id);
+ T('vídeo longo demais: falha honesta com o limite',v.st==='fail'&&(TEM_FF?/gera até 60 s/:/FFmpeg|não está disponível/).test(v.erro));
+ if(TEM_FF){let vv=await(await J('/api/pedidos','POST',{texto:'Vídeo de 2 segundos para teste',modo:'Vídeos'})).json();vv=await fim(vv.id);
+  r=await J('/api/projetos/'+vv.id+'/arquivos/video.mp4');const bb=Buffer.from(await r.arrayBuffer());
+  T('vídeo: MP4 válido e baixável',vv.st==='ok'&&r.status===200&&r.headers.get('content-type')==='video/mp4'&&bb.slice(4,8).toString()==='ftyp'&&bb.length>1000);
+  let v0=await(await J('/api/pedidos','POST',{texto:'vídeo de 2 segundos %{pid} $(id) "; rm -rf /',modo:'Vídeos',dur:0})).json();v0=await fim(v0.id);T('vídeo: texto malicioso não vira comando',v0.st==='ok'||v0.st==='fail')}
+ let c=await(await J('/api/pedidos','POST',{texto:'Um site',plano:'r'})).json();T('revisar antes: fica em plano',c.st==='plan');
+ let a=await(await J('/api/projetos/'+c.id+'/aprovar','POST',{})).json();a=await fim(a.id);T('aprovar executa até o fim',a.st==='ok');
+ let c2=await(await J('/api/pedidos','POST',{texto:'Um site',plano:'r'})).json();let cc=await(await J('/api/projetos/'+c2.id+'/cancelar','POST',{})).json();T('cancelar interrompe',cc.st==='cancel');
+ let kept=false;for(let k=0;k<8&&!kept;k++){const q=await(await J('/api/pedidos','POST',{texto:'Um site'})).json();for(let n=0;n<600;n++){const g=await(await J('/api/projetos/'+q.id)).json();if(g.arquivos.length){const cd=await(await J('/api/projetos/'+q.id+'/cancelar','POST',{apagar_arquivos:false})).json();if(cd.st==='cancel')kept=(await J('/api/projetos/'+q.id+'/arquivos/index.html')).status===200;break}if(['ok','fail'].includes(g.st))break;await sleep(2)}}
+ T('cancelar preserva os arquivos já gerados',kept);
+ T('pedido vazio → 400',(await J('/api/pedidos','POST',{texto:'  '})).status===400);
+ T('texto de 3000 caracteres → 400',(await J('/api/pedidos','POST',{texto:'a'.repeat(3000)})).status===400);
+ T('modo inválido → 400',(await J('/api/pedidos','POST',{texto:'x',modo:'Hack'})).status===400);
+ T('JSON inválido → 400',(await fetch(B+'/api/pedidos',{method:'POST',body:'{x',headers:{'Content-Type':'application/json'}})).status===400);
+ T('corpo grande → 413',await fetch(B+'/api/pedidos',{method:'POST',body:JSON.stringify({texto:'a'.repeat(70000)})}).then(r=>r.status===413,()=>true));
+ T('travessia de caminho bloqueada',(await J('/api/projetos/'+p.id+'/arquivos/..%2Fprojeto.json')).status===404&&(await J('/api/projetos/..%2F..%2Fetc/arquivos/x')).status===404);
+ T('arquivo fora da lista do projeto → 404',(await J('/api/projetos/'+p.id+'/arquivos/projeto.json')).status===404);
+ T('origem externa em POST → 403',(await J('/api/pedidos','POST',{texto:'x'},{Origin:'http://evil.example'})).status===403);
+ T('origem permitida (VECORION_ORIGENS, ex.: Netlify) em POST → aceita',(await J('/api/pedidos','POST',{texto:'Um site'},{Origin:'https://app.exemplo.com'})).status===201);
+ T('origem inválida ("null") em POST → 403',(await J('/api/pedidos','POST',{texto:'x'},{Origin:'null'})).status===403);
+ T('/saude responde sem login',(await J('/saude')).status===200);
+ const dt=fs.mkdtempSync(path.join(os.tmpdir(),'vec-t-'));const s2=spawn('node',[path.join(__dirname,'..','core','server.js')],{env:{...process.env,PORT:'0',VECORION_DATA:dt,VECORION_TOKEN:'segredo-de-teste-123'}});
+ const B2=String(await new Promise(r=>s2.stdout.once('data',r))).match(/http:\/\/\S+/)[0];
+ const a1=await fetch(B2+'/api/motores');const a2=await fetch(B2+'/api/entrar?t=errado',{redirect:'manual'});const a3=await fetch(B2+'/api/entrar?t=segredo-de-teste-123',{redirect:'manual'});
+ const ck=(a3.headers.get('set-cookie')||'').split(';')[0];const a4=await fetch(B2+'/api/motores',{headers:{cookie:ck}});
+ T('token: sem login 401, token errado 401, /api/entrar dá cookie e libera',a1.status===401&&a2.status===401&&a3.status===302&&/HttpOnly/.test(a3.headers.get('set-cookie'))&&a4.status===200);
+ s2.kill();
+ T('rota inexistente → 404',(await J('/api/nada')).status===404);
+ const ac=new AbortController();const se=await fetch(B+'/api/projetos/'+p.id+'/eventos',{signal:ac.signal});const rd=se.body.getReader();const first=new TextDecoder().decode((await rd.read()).value);ac.abort();T('SSE envia estado inicial',se.headers.get('content-type')==='text/event-stream'&&/"st":"ok"/.test(first));
+ const l=await(await J('/api/projetos')).json();T('persistência em disco por projeto',fs.existsSync(path.join(dados,'projetos',p.id,'projeto.json'))&&l.length>=8);
+ }catch(e){T('erro inesperado no teste: '+e.message,false)}
+ console.log('\n'+ok+' passaram, '+bad+' falharam');sv.kill();process.exit(bad?1:0)});
