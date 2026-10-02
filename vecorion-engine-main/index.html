@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vecorion Engine · Do pedido ao resultado</title>
+<meta name="description" content="Descreva o resultado. O Core cuida do caminho.">
+<style>
+:root{--bg0:#0A0E14;--bg1:#101722;--bg2:#172131;--bd:#26334A;--t1:#E8EEF7;--t2:#9FB0C8;--ac:#3BA7FF;--ac2:#2EE6C5;--ok:#3DDC97;--wn:#F5B94A;--er:#FF6B6B;--bdi:#5B7090;--on:#06223a;--fast:.15s;--base:.24s;--ease:cubic-bezier(.2,0,0,1);--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[data-theme=light]{--bg0:#F6F8FB;--bg1:#fff;--bg2:#EEF2F8;--bd:#D5DDEA;--t1:#0F1A2B;--t2:#4A5B75;--ac:#0B6FD6;--ac2:#0B8F7A;--ok:#12805A;--wn:#9A6200;--er:#C62F2F;--bdi:#72839E;--on:#fff}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg0);color:var(--t1);font:16px/1.5 var(--sans)}
+:root{padding-top:env(safe-area-inset-top,0)}
+[hidden]{display:none!important}
+.app{display:grid;grid-template-columns:208px 1fr;min-height:100%}
+nav{background:var(--bg1);border-right:1px solid var(--bd);padding:16px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:.04em;margin:0 8px 16px;color:var(--t1);text-decoration:none}
+.brand svg{width:40px;height:20px}
+nav a.n{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 10px;border-radius:10px;color:var(--t2);text-decoration:none}
+nav a.n svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+nav a.n[aria-current=page]{color:var(--t1);background:var(--bg2);box-shadow:inset 2px 0 var(--ac)}
+.sim{margin-top:auto;font-size:.75rem;color:var(--t2);padding:8px}
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+main{position:relative;padding:32px 24px 48px;max-width:1000px;width:100%;margin:0 auto;overflow-x:hidden}
+h1{font-size:clamp(1.5rem,3.4vw,2.75rem);line-height:1.15;margin:0 0 8px;font-weight:600;outline:0}
+.sub{color:var(--t2);margin:0 0 24px;max-width:46ch}
+#net{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);position:absolute;inset:0;width:100%;height:520px;pointer-events:none;z-index:0}
+#net .a{animation:dr 20s ease-in-out infinite alternate}#net .b{animation:dr 24s ease-in-out infinite alternate-reverse}
+@keyframes dr{to{transform:translate(4px,-3px)}}
+.wrap{position:relative;z-index:1;padding-top:56px}
+textarea,select,input[type=number]{width:100%;background:var(--bg1);color:var(--t1);border:1px solid var(--bdi);border-radius:10px;padding:12px;font:inherit;min-height:44px}::placeholder{color:var(--t2);opacity:1}
+textarea{resize:vertical;min-height:112px}
+textarea:focus{box-shadow:0 0 8px color-mix(in srgb,var(--ac) 35%,transparent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}
+.row select{width:auto}
+.btn{min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--bdi);background:var(--bg2);color:var(--t1);font:inherit;cursor:pointer;display:inline-flex;align-items:center;transition:transform var(--fast) var(--ease),background var(--fast)}
+.btn:active{transform:scale(.97)}.pri{background:var(--ac);color:var(--on);border-color:var(--ac);font-weight:600}.dng{border-color:var(--er);color:var(--er)}
+details{background:var(--bg1);border:1px solid var(--bd);border-radius:10px;padding:0 12px;margin:12px 0}
+summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding-bottom:12px}
+label span{display:block;font-size:.875rem;color:var(--t2);margin-bottom:4px}
+.est{font-size:.875rem;padding:0 0 12px;color:var(--t2)}.est.w{color:var(--wn)}
+.hint,.tag{color:var(--t2);font-size:.875rem;margin:8px 0}
+.card{display:flex;gap:12px;align-items:center;background:var(--bg1);border:1px solid var(--bd);border-radius:10px;padding:12px;margin:8px 0;color:inherit;text-decoration:none;min-height:44px}
+.card span{min-width:0;overflow-wrap:anywhere}.card b{display:block}.card small{color:var(--t2)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:var(--mc,var(--ac))}
+.st{display:flex;align-items:center;gap:8px;color:var(--t2);margin:4px 0 12px}
+.bar{height:8px;background:var(--bg2);border-radius:99px;overflow:hidden;margin-bottom:16px}.bar i{display:block;height:100%;background:var(--ac2);transform-origin:0 50%;transform:scaleX(var(--p,0));transition:transform var(--base) linear}
+[role=tablist]{display:flex;gap:4px;border-bottom:1px solid var(--bd);margin-bottom:16px;overflow-x:auto}
+[role=tab]{min-height:44px;padding:0 14px;background:none;border:0;border-bottom:2px solid transparent;color:var(--t2);font:inherit;cursor:pointer}[role=tab][aria-selected=true]{color:var(--t1);border-color:var(--ac)}
+ol.fio{list-style:none;margin:0 0 16px;padding:0 0 0 36px;position:relative}
+ol.fio:before,.fill{content:"";position:absolute;left:11px;top:12px;width:2px;background:var(--bd)}ol.fio:before{bottom:12px}
+.fill{background:var(--ac2);bottom:12px;transform:scaleY(var(--pg,0));transform-origin:0 0;transition:transform var(--base) var(--ease)}
+ol.fio li{position:relative;padding:8px 0;min-height:44px}
+.mk{position:absolute;left:-36px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--bg0);border:2px solid var(--bd);display:grid;place-items:center;font-size:.75rem}
+li.d .mk{border-color:var(--ok);color:var(--ok)}li.a .mk{border-color:var(--mc,var(--ac2))}li.a .mk:before{content:"";position:absolute;inset:-2px;border:2px solid var(--mc,var(--ac2));border-radius:50%;animation:pu 2s linear infinite}
+li.a:after{content:"";position:absolute;left:-12px;top:21px;width:12px;height:2px;background:var(--mc,var(--ac2));animation:br var(--base) var(--ease)}
+@keyframes pu{from{transform:scale(1);opacity:.6}to{transform:scale(1.7);opacity:0}}@keyframes br{from{transform:scaleX(0);transform-origin:0 0}}
+li.x .mk{border-color:var(--wn);color:var(--wn)}
+.ask,.warn{border:1px solid var(--ac2);border-radius:10px;padding:12px;margin:12px 0;background:var(--bg1)}.warn{border-color:var(--wn)}
+.banner{background:var(--bg2);border:1px solid var(--wn);border-radius:10px;padding:10px 12px;margin-bottom:16px}
+dialog{background:var(--bg1);color:var(--t1);border:1px solid var(--bd);border-radius:16px;max-width:min(92vw,440px)}dialog::backdrop{background:rgba(0,0,0,.6)}
+#toasts{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0));display:grid;gap:8px;z-index:9}
+.toast{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;animation:ti var(--base) var(--ease)}@keyframes ti{from{opacity:0;transform:translateY(12px)}}
+.sk:focus{position:fixed;left:8px;top:8px;width:auto;height:auto;clip:auto;z-index:20;background:var(--bg2);padding:10px 14px;border-radius:10px;border:1px solid var(--ac);color:var(--t1)}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--bd);border-top-color:var(--ac2);border-radius:50%;animation:sp 3s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.lg .dr{stroke-dasharray:1;stroke-dashoffset:0}.lg.draw .dr{animation:dw .9s var(--ease)}@keyframes dw{from{stroke-dashoffset:1}}
+@media(max-width:1023px){.app{display:block}nav{position:fixed;inset:auto 0 0 0;height:auto;flex-direction:row;justify-content:space-around;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0));border-right:0;border-top:1px solid var(--bd);z-index:5}.brand,.sim{display:none}.spin{animation:none}nav a.n .x{display:none}nav a.n{flex-direction:column;gap:0;justify-content:center;font-size:.75rem;padding:0 8px}main{padding-bottom:96px}#toasts{bottom:calc(84px + env(safe-area-inset-bottom,0))}}
+[data-motion=reduced] *,[data-motion=reduced] *:before,[data-motion=reduced] *:after{animation:none!important;transition-duration:.01ms!important}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="gt" x1="0" x2="1"><stop offset="0" stop-color="#3BA7FF"/><stop offset="1" stop-color="#2EE6C5"/></linearGradient>
+</defs></svg>
+<button class="sr sk" id="sk">Ir para o conteúdo</button>
+<div class="app">
+<nav id="nav" aria-label="Principal">
+<a class="brand" href="#/" aria-label="Vecorion, novo pedido"><svg id="logo" class="lg" viewBox="0 0 64 32" role="img" aria-label="Vecorion"><path class="dr" pathLength="1" d="M32 16c-5-8-24-9-24 0s19 9 24 0c5-9 24-9 24 0s-19 9-24 0" fill="none" stroke="url(#gt)" stroke-width="2.4" stroke-linecap="round"/><circle cx="47" cy="16" r="5.5" fill="url(#gt)"/><path d="M41.800 16h10.400M47 10.500c-3 3-3 8 0 11M47 10.500c3 3 3 8 0 11" fill="none" stroke="#0A0E14" stroke-opacity=".5" stroke-width=".8"/></svg>VECORION</a>
+<a class="n" href="#/" data-v="novo"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Novo<span class="x"> pedido</span></span></a>
+<a class="n" href="#/projetos" data-v="proj"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9"/></svg><span>Projetos</span></a>
+<a class="n" href="#/motores" data-v="mot"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/></svg><span>Motores</span></a>
+<a class="n" href="#/config" data-v="cfg"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.600 5.600l2.100 2.100M16.300 16.300l2.100 2.100M5.600 18.400l2.100-2.100M16.300 7.700l2.100-2.100"/></svg><span>Configurações</span></a>
+<div class="sim">Core simulado: demonstração da interface</div>
+</nav>
+<main id="main">
+<div id="off" class="banner" hidden>Você está offline. Seus pedidos ficam na fila e são enviados quando a conexão voltar.</div>
+
+<section id="v-novo"><svg id="net" aria-hidden="true" viewBox="0 0 1440 520" preserveAspectRatio="xMidYMin slice"></svg>
+<div class="wrap"><h1 tabindex="-1">O que você quer criar?</h1>
+<p class="sub">Descreva o resultado. O Core decide como chegar lá.</p>
+<label><span class="sr">Descreva o resultado</span><textarea id="req" rows="4"></textarea></label>
+<div class="row"><label class="btn"><input type="file" id="files" multiple hidden>Anexar arquivos</label><span id="fc" class="hint"></span>
+<select id="mode" aria-label="Modo"><option>Automático<option>Sites<option>Imagens<option>Vídeos</select></div>
+<details id="opts"><summary>Opções do pedido</summary><div class="g">
+<label><span>Onde executar</span><select id="env"><option>Automático<option>Local<option>Nuvem<option>Híbrido</select></label>
+<label><span>Como conduzir</span><select id="plan"><option value="a">Automático<option value="r">Revisar antes</select></label>
+<label><span>Duração do vídeo (min)</span><input type="number" id="dur" min="0" placeholder="Ex.: 30"></label>
+<label><span>Resolução</span><select id="res"><option>1080p<option>4K</select></label>
+<label><span>Tempo máximo de renderização (min)</span><input type="number" id="tmax" min="1" value="120"></label>
+<label><span>Uso máximo de memória (GB)</span><input type="number" id="mmax" min="1" value="16"></label></div>
+<p id="est" class="est" aria-live="polite">O Core respeita estes limites e avisa antes de passar deles.</p></details>
+<button class="btn pri" id="run">Executar</button>
+<p class="hint">O Core pergunta só quando precisar de uma decisão sua.</p>
+<h2 style="font-size:1rem;margin-top:32px">Projetos recentes</h2><div id="rec"></div>
+<p class="hint" id="simnote">Demonstração: o Core é simulado e nada é gerado de verdade.</p><p class="tag">Do pedido ao resultado.</p></div></section>
+
+<section id="v-proj" hidden><h1 tabindex="-1">Projetos</h1><div id="plist"></div></section>
+
+<section id="v-p" hidden><a href="#/projetos" class="hint">Voltar</a><h1 id="pt" tabindex="-1"></h1>
+<p class="st"><span id="ps"></span></p><div class="bar"><i id="pb"></i></div>
+<div role="tablist" aria-label="Projeto"><button role="tab" aria-selected="true" data-t="0">Plano</button><button role="tab" aria-selected="false" data-t="1">Arquivos</button><button role="tab" aria-selected="false" data-t="2">Resultado</button></div>
+<div id="tp0"><div id="ask"></div><ol class="fio" id="fio"></ol><div class="row"><button class="btn" id="go" hidden>Aprovar e executar</button><button class="btn dng" id="cx">Cancelar</button></div><details><summary>Ver logs</summary><pre id="log" style="white-space:pre-wrap;font:.8rem ui-monospace,monospace;color:var(--t2)"></pre></details></div>
+<div id="tp1" hidden></div><div id="tp2" hidden></div></section>
+
+<section id="v-mot" hidden><h1 tabindex="-1">Motores</h1><p class="sub">Cada motor trabalha de forma independente. O Core coordena todos. <span id="msim">Os estados mostrados aqui são simulados.</span></p><div id="mlist"></div></section>
+
+<section id="v-cfg" hidden><h1 tabindex="-1">Configurações</h1><div class="g" style="max-width:520px">
+<label><span>Tema</span><select id="th"><option value="sys">Sistema<option value="dark">Escuro<option value="light">Claro</select></label>
+<label><span>Reduzir movimento</span><select id="mo"><option value="sys">Seguir o sistema<option value="reduced">Sempre reduzir</select></label></div>
+<p class="hint">Serviços externos são opcionais. Todos os motores funcionam sem eles. Quando a interface abre sem o servidor, o Core é simulado e nada é gerado de verdade.</p></section>
+</main></div>
+<div id="live" class="sr" aria-live="polite"></div><div id="toasts" role="status"></div>
+<dialog id="dlg"><form method="dialog" id="df"></form></dialog>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ls={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const MC={site:['Sites','#5AA9FF'],img:['Imagens','#B08CFF'],vid:['Vídeos','#FF9E5E']};
+const ST={plan:'Plano pronto',exec:'Em execução',ask:'Precisamos de uma decisão sua',fix:'Corrigindo e tentando de novo',ok:'Concluído',cancel:'Cancelado',fail:'Não foi possível concluir'};
+let P=[],cur=null,queue=ls.get('vec.q',[]),files=[],API=false,MOT=[];
+const mq=matchMedia('(prefers-reduced-motion:reduce)');
+function applyPrefs(){const t=ls.get('vec.t','sys'),m=ls.get('vec.m','sys'),r=document.documentElement;
+ r.dataset.theme=t==='sys'?(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):t;
+ r.dataset.motion=(m==='reduced'||mq.matches)?'reduced':'full';$('#th').value=t;$('#mo').value=m}
+$('#th').onchange=e=>{ls.set('vec.t',e.target.value);applyPrefs()};$('#mo').onchange=e=>{ls.set('vec.m',e.target.value);applyPrefs()};mq.onchange=applyPrefs;applyPrefs();
+const reduced=()=>document.documentElement.dataset.motion==='reduced';
+try{if(!sessionStorage.getItem('lg')&&!reduced()){$('#logo').classList.add('draw');sessionStorage.setItem('lg',1)}}catch(e){}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;$('#toasts').append(d);setTimeout(()=>d.remove(),3500)}
+function say(t){$('#live').textContent='';setTimeout(()=>$('#live').textContent=t,50)}
+function dlg(html,ok){const f=$('#df');f.innerHTML=html+'<div class="row"><button class="btn pri" value="ok">'+'Confirmar'+'</button><button class="btn" value="no">Voltar</button></div>';const d=$('#dlg');d.returnValue='';d.onclose=()=>{if(d.returnValue==='ok')ok()};d.showModal()}
+/* Arte procedural: rede do Core (seed fixo) */
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function net(){const n=matchMedia('(min-width:1024px)').matches?24:0,r=rng(2026),cx=720,cy=220;let s='<defs><radialGradient id="cg"><stop offset="0" stop-color="#2EE6C5"/><stop offset="1" stop-color="#3BA7FF" stop-opacity="0"/></radialGradient></defs><g stroke="var(--bd)" fill="none" opacity=".6"><circle cx="'+cx+'" cy="'+cy+'" r="140"/><circle cx="'+cx+'" cy="'+cy+'" r="260"/></g>';
+ const pts=[];for(let i=0;i<n;i++){const a=r()*6.283,d=120+r()*480;pts.push([cx+Math.cos(a)*d,cy+Math.sin(a)*d*.55])}
+ let l='',c='';pts.forEach((p,i)=>{const q=pts[(i+1)%n],w=pts[(i+5)%n];l+='<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+q[0]+'" y2="'+q[1]+'"/><line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+cx+'" y2="'+cy+'" opacity=".5"/>';c+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(2+r()*2)+'"/>'});
+ s+='<g class="a" stroke="var(--ac)" stroke-opacity=".16">'+l+'</g><g class="b" fill="var(--ac)" fill-opacity=".5">'+c+'</g><circle cx="'+cx+'" cy="'+cy+'" r="26" fill="url(#cg)"/><circle cx="'+cx+'" cy="'+cy+'" r="5" fill="#2EE6C5"/>';$('#net').innerHTML=s}
+function thumb(id){const r=rng([...id].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7));let p=[],s='<svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true" style="flex:none"><rect width="56" height="56" rx="10" fill="var(--bg2)"/>';for(let i=0;i<7;i++)p.push([8+r()*40,8+r()*40]);p.forEach((a,i)=>{const b=p[(i+1)%7];s+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="var(--ac)" stroke-opacity=".4"/>'});p.forEach((a,i)=>s+='<circle cx="'+a[0]+'" cy="'+a[1]+'" r="'+(i?2:4)+'" fill="var(--ac2)"/>');return s+'</svg>'}
+matchMedia('(min-width:1024px)').onchange=net;net();
+/* Placeholder rotativo */
+const EX=['Um site para minha empresa','Um vídeo de 30 minutos sobre energia solar','Imagens para uma campanha, com esta identidade'];let ei=0;$('#req').placeholder=EX[0];
+setInterval(()=>{if(!reduced()&&document.activeElement!==$('#req')&&!document.hidden){ei=(ei+1)%3;$('#req').placeholder=EX[ei]}},6000);
+/* Estimativa e limites */
+function est(){const d=+$('#dur').value;if(!d)return null;const k=$('#res').value==='4K'?3:1,t=Math.round(d*.6*k),m=Math.round(2*k*(1+d/60)*10)/10,tm=+$('#tmax').value,mm=+$('#mmax').value;return{t,m,tm,mm,bad:t>tm?['tempo','~'+t+' min','limite '+tm+' min']:m>mm?['memória','~'+m+' GB','limite '+mm+' GB']:null}}
+function showEst(){const e=est(),o=$('#est');if(!e){o.className='est';o.textContent='O Core respeita estes limites e avisa antes de passar deles.';return false}
+ if(e.bad){o.className='est w';o.innerHTML='Este pedido passa do limite de '+e.bad[0]+': precisa de '+e.bad[1]+', e o '+e.bad[2]+' (valores simulados).<br><button class="btn" data-a="adj">Ajustar o pedido</button> <button class="btn" data-a="up">Aumentar o limite</button>';return true}
+ o.className='est';o.textContent='Estimativa simulada: cerca de '+e.t+' min de renderização, até '+e.m+' GB de memória. Dentro dos limites do projeto.';return false}
+['dur','res','tmax','mmax'].forEach(i=>$('#'+i).oninput=showEst);
+$('#est').onclick=e=>{const a=e.target.dataset.a;if(a==='adj')$('#dur').focus();if(a==='up'){const x=est();if(x.t>x.tm)$('#tmax').value=x.t;else $('#mmax').value=Math.ceil(x.m);showEst()}};
+$('#files').onchange=e=>{files=[...e.target.files].map(f=>f.name);$('#fc').textContent=files.length+' arquivo(s) anexado(s)'};
+/* Core simulado */
+function build(q){const t=q.text,vid=/v[ií]deo/i.test(t)||q.mode==='Vídeos',site=/site/i.test(t)||q.mode==='Sites',img=/imagen|imagem/i.test(t)||q.mode==='Imagens';
+ const s=[['Entender o pedido']];if(vid){s.push(['Escrever o roteiro'],['Criar as imagens','img'],['Montar o vídeo','vid'])}else if(site){s.push(['Montar o site','site'],['Criar as imagens','img'])}else if(img){s.push(['Criar as imagens','img'])}else{s.push(['Montar o site','site'])}
+ s.push(['Conferir o resultado'],['Preparar a entrega']);return{kind:vid?'vídeo':img&&!site?'conjunto de imagens':'site',steps:s.map(a=>({n:a[0],m:a[1],ask:vid&&a[0]==='Montar o vídeo'&&!q.dur,fix:a[0]==='Conferir o resultado'}))}}
+function create(q){const b=build(q),p={id:'p'+Date.now().toString(36)+P.length,title:q.text.slice(0,60),kind:b.kind,steps:b.steps,i:0,st:q.plan==='r'?'plan':'exec',log:['Pedido recebido. O Core está planejando.'],files:q.files||[],env:q.env};P.unshift(p);if(p.st==='exec')step(p);else sync(p);return p}
+function sync(p){if(p.st==='plan')p.log.push('Plano pronto, '+p.steps.length+' etapas.');const s=p.steps[p.i];say(p.st==='exec'&&s?'Executando etapa '+(p.i+1)+' de '+p.steps.length+': '+s.n:ST[p.st]);if(cur===p.id)renderP();renderRec()}
+function step(p){if(p.st!=='exec')return;const s=p.steps[p.i];if(!s){p.st='ok';p.log.push('Concluído.');sync(p);toast('Pronto. Seu '+p.kind+' está concluído.');return}
+ if(!s.lg){s.lg=1;p.log.push('Etapa: '+s.n+(s.m?' ('+MC[s.m][0]+')':''))}if(s.ask&&!p.asked){p.asked=1;p.st='ask';sync(p);return}sync(p);
+ p.t=setTimeout(()=>{if(s.fix&&!s.fixed){s.fixed=1;p.st='fix';p.log.push('Encontramos um problema em '+s.n+'. Corrigindo.');sync(p);p.t=setTimeout(()=>{p.st='exec';p.log.push('Corrigido. Conferindo de novo.');step(p)},1800);return}s.done=1;p.i++;step(p)},1500)}
+function up(p){const i=P.findIndex(x=>x.id===p.id),o=P[i];if(i<0)P.unshift(p);else P[i]=p;if(o&&o.st!==p.st)say(ST[p.st]);if(cur===p.id)renderP();renderRec();if(!$('#v-proj').hidden)renderList()}
+const J=(u,m,b)=>fetch(u,{method:m||'GET',headers:{'Content-Type':'application/json'},body:b&&JSON.stringify(b)}).then(r=>r.json());
+function run(q){if(!navigator.onLine){queue.push(q);ls.set('vec.q',queue);toast('Na fila · aguardando conexão');return}
+ if(API){J('/api/pedidos','POST',{texto:q.text,modo:q.mode,plano:q.plan,dur:q.dur,env:q.env}).then(p=>{if(p.erro){toast(p.erro);return}up(p);location.hash='#/projeto/'+p.id}).catch(()=>toast('Não foi possível enviar o pedido. Tente de novo.'));return}const p=create(q);location.hash='#/projeto/'+p.id}
+$('#run').onclick=()=>{const text=$('#req').value.trim();if(!text){toast('Descreva o que você quer criar para continuar.');$('#req').focus();return}
+ if(showEst()){$('#opts').open=true;return}
+ run({text,mode:$('#mode').value,plan:$('#plan').value,dur:+$('#dur').value,env:$('#env').value,files});$('#req').value='';files=[];$('#fc').textContent=''};
+$('#req').onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')$('#run').click()};
+function flush(){if(!queue.length)return;const q=queue;queue=[];ls.set('vec.q',queue);q.forEach(x=>API?run(x):create(x));toast('Pedidos da fila enviados.')}
+function net2(){$('#off').hidden=navigator.onLine;if(navigator.onLine)flush()}addEventListener('online',net2);addEventListener('offline',net2);net2();
+/* Telas */
+function card(p){const m=[...new Set(p.steps.filter(s=>s.m).map(s=>s.m))];return'<a class="card" href="#/projeto/'+p.id+'">'+thumb(p.id)+'<span><b>'+esc(p.title)+'</b><small>'+ST[p.st]+(m.length?' · '+m.map(x=>MC[x][0]).join(', '):'')+'</small></span></a>'}
+function renderRec(){$('#rec').innerHTML=P.slice(0,3).map(card).join('')||'<p class="hint">Nenhum projeto ainda. Descreva o que você quer criar e o primeiro aparece aqui.</p>';if(!$('#v-proj').hidden)renderList()}
+function renderList(){$('#plist').innerHTML=(queue.map(q=>'<div class="card"><span><b>'+esc(q.text.slice(0,60))+'</b><small>Na fila · aguardando conexão</small></span></div>').join(''))+(P.map(card).join('')||'<p class="hint">Nenhum projeto ainda. Descreva o que você quer criar e o primeiro aparece aqui.</p>')}
+function renderP(){const p=P.find(x=>x.id===cur);if(!p){location.hash='#/projetos';return}
+ $('#pt').textContent=p.title;const s=p.steps[p.i];$('#ps').textContent=(p.st==='exec'&&s?'Em execução, etapa '+(p.i+1)+' de '+p.steps.length:ST[p.st]);
+ const dn=p.st==='ok'?p.steps.length:p.i;$('#pb').style.setProperty('--p',dn/p.steps.length);
+ $('#fio').style.setProperty('--pg',Math.max(0,(p.st==='fix'?dn-.6:dn)/p.steps.length));
+ $('#fio').innerHTML='<span class="fill"></span>'+p.steps.map((x,i)=>{const c=i<dn?'d':i===p.i&&(p.st==='exec'||p.st==='ask'||p.st==='fix')?(p.st==='fix'?'a x':'a'):'';return'<li class="'+c+'" style="--mc:'+(x.m?MC[x.m][1]:'var(--ac2)')+'"><span class="mk" aria-hidden="true">'+(c==='d'?'✔':c==='a x'?'↺':c?'●':'○')+'</span>'+x.n+(x.m?' <small class="hint"><i class="dot"></i>'+MC[x.m][0]+'</small>':'')+(c==='a x'?'<small class="hint"> · corrigindo</small>':c==='a'?'<small class="hint"> · em andamento</small>':'')+'</li>'}).join('');
+ $('#ask').innerHTML=p.st==='ask'?'<div class="ask"><b>O Core precisa de uma decisão sua</b><p>Qual formato de entrega?</p><label><input type="radio" name="f" checked> MP4 1080p</label> <label><input type="radio" name="f"> MP4 4K</label><div class="row"><button class="btn pri" data-a="ans">Responder</button><button class="btn" data-a="ans">Deixar o Core decidir</button></div></div>':p.st==='fail'?'<div class="warn"><b>Não foi possível concluir</b><p>'+esc(p.erro||'')+'</p></div>':'';
+ $('#go').hidden=p.st!=='plan';$('#cx').hidden=['ok','cancel','fail'].includes(p.st);$('#log').textContent=p.log.join('\n');
+ $('#tp1').innerHTML=API?((p.arquivos||[]).map(a=>'<a class="card" href="/api/projetos/'+p.id+'/arquivos/'+encodeURIComponent(a.nome)+'" download><span><b>'+esc(a.nome)+'</b><small>Gerado · '+MC[a.motor][0]+'</small></span></a>').join('')||'<p class="hint">Os arquivos enviados e os gerados aparecem neste lugar.</p>'):(p.files.map(f=>'<div class="card"><span><b>'+esc(f)+'</b><small>Enviado</small></span></div>').join(''))+p.steps.filter(x=>x.done).map(x=>'<div class="card"><span><b>'+x.n+'</b><small>Gerado</small></span></div>').join('')||'<p class="hint">Os arquivos enviados e os gerados aparecem neste lugar.</p>';
+ $('#tp2').innerHTML=p.st==='ok'?'<p>Pronto. Seu '+p.kind+' está concluído.</p><div class="row"><button class="btn pri" data-a="dl">Baixar</button><button class="btn" data-a="adj">Pedir ajuste</button></div>':'<p class="hint">Assim que o Core entregar, você poderá ver, baixar e pedir ajustes.</p>'}
+$('#v-p').onclick=e=>{const a=e.target.dataset.a,p=P.find(x=>x.id===cur);if(e.target.dataset.t)tab(+e.target.dataset.t);
+ if(a==='ans'){p.st='exec';p.log.push('Decisão registrada.');step(p)}if(a==='dl'){if(!API){toast('Modo demonstração: nada foi gerado de verdade. Rode "npm start" para gerar e baixar arquivos reais.');return}
+  const L=(p&&p.arquivos)||[];if(!L.length){toast('Este projeto não tem arquivos para baixar.');return}
+  L.forEach((f,i)=>setTimeout(()=>{const l=document.createElement('a');l.href='/api/projetos/'+p.id+'/arquivos/'+encodeURIComponent(f.nome);l.download=f.nome;document.body.appendChild(l);l.click();l.remove()},i*400));
+  toast('Baixando '+L.length+' arquivo(s).')}
+ if(a==='adj')dlg('<h2 style="margin-top:0;font-size:1.1rem">O que você quer mudar?</h2><textarea id="aj" placeholder="Ex.: deixe a narração mais lenta e troque a abertura"></textarea><p class="hint">Só o que mudou será refeito.</p>',()=>toast('Versão 2 criada. Só o que mudou foi refeito.'))};
+$('#go').onclick=()=>{if(API){J('/api/projetos/'+cur+'/aprovar','POST',{}).then(up);return}const p=P.find(x=>x.id===cur);p.st='exec';p.log.push('Plano aprovado. Execução iniciada.');step(p)};
+$('#cx').onclick=()=>dlg('<h2 style="margin-top:0;font-size:1.1rem">Cancelar este projeto?</h2><p>A execução será interrompida e o que já foi gerado fica salvo em Arquivos.</p><label><input type="checkbox" id="ap"> Apagar também os arquivos gerados</label>',()=>{if(API){J('/api/projetos/'+cur+'/cancelar','POST',{apagar_arquivos:!!($('#ap')&&$('#ap').checked)}).then(up);return}const p=P.find(x=>x.id===cur);clearTimeout(p.t);p.st='cancel';if($('#ap')&&$('#ap').checked)p.steps.forEach(x=>x.done=0);p.log.push('Cancelado.');sync(p)});
+function renderM(){const busy=m=>P.some(p=>p.st==='exec'&&p.steps[p.i]&&p.steps[p.i].m===m),D={site:'Cria sites, de uma página única a projetos completos.',img:'Cria e processa imagens a partir de código.',vid:'Monta vídeos de qualquer duração, dentro dos limites do projeto.'};
+ $('#mlist').innerHTML=Object.keys(MC).map(k=>'<div class="card" style="--mc:'+MC[k][1]+'"><span><b><i class="dot"></i>'+MC[k][0]+'</b><small>'+D[k]+'</small><br><small>'+(API?((MOT.find(x=>x.id===k)||{}).estado==='disponivel'?'Disponível':'Indisponível neste ambiente'):busy(k)?'<i class="spin"></i> Ocupado':'Disponível')+'</small></span><button class="btn" style="margin-left:auto" data-m="'+k+'">Testar funcionamento</button></div>').join('')}
+$('#mlist').onclick=e=>{const k=e.target.dataset.m;if(k)toast(API&&(MOT.find(x=>x.id===k)||{}).estado!=='disponivel'?'O motor de '+MC[k][0].toLowerCase()+' não está disponível neste ambiente.':'O motor de '+MC[k][0].toLowerCase()+' está funcionando.')};
+function route(){const h=location.hash.slice(2);let v='novo';cur=null;if(h==='projetos')v='proj';else if(h.startsWith('projeto/')){v='p';cur=h.split('/')[1]}else if(h==='motores')v='mot';else if(h==='config')v='cfg';
+ ['novo','proj','p','mot','cfg'].forEach(x=>$('#v-'+x).hidden=x!==v);$$('nav a[data-v]').forEach(a=>a.setAttribute('aria-current',a.dataset.v===(v==='p'?'proj':v)?'page':'false'));
+ if(v==='p'){tab(0);renderP()}if(v==='proj')renderList();if(v==='mot')renderM();if(v==='novo')renderRec();const t=$('#v-'+v+' h1');t&&t.focus({preventScroll:true});scrollTo(0,0)}
+$('#sk').onclick=()=>{const t=$$('main h1').find(x=>x.offsetParent);t&&t.focus()};
+const TB=$$('[role=tab]');TB.forEach((b,i)=>{b.id='tb'+i;b.setAttribute('aria-controls','tp'+i);$('#tp'+i).setAttribute('role','tabpanel');$('#tp'+i).setAttribute('aria-labelledby','tb'+i);b.tabIndex=i?-1:0;b.onkeydown=e=>{const k={ArrowRight:1,ArrowLeft:-1}[e.key];if(k){const n=TB[(i+k+3)%3];n.click();n.focus();e.preventDefault()}}});
+function tab(i){TB.forEach((b,j)=>{b.setAttribute('aria-selected',j===i);b.tabIndex=j===i?0:-1;$('#tp'+j).hidden=j!==i})}
+addEventListener('hashchange',route);route();
+fetch('/api/motores').then(r=>{if(r.status===401)$('.sim').textContent='Sem acesso ao Core: abra /api/entrar?t=SEU_TOKEN uma vez neste navegador.';return r.ok?r.json():Promise.reject()}).then(m=>{API=true;MOT=m;['.sim','#simnote','#msim'].forEach(s=>$(s).hidden=true);return J('/api/projetos')}).then(l=>{l.forEach(up);setInterval(()=>P.filter(p=>p.st==='exec'||p.st==='fix').forEach(p=>J('/api/projetos/'+p.id).then(up).catch(()=>{})),1000);route()}).catch(()=>{});
+</script>
+</body>
+</html>
