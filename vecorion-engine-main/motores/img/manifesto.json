@@ -1,0 +1,1 @@
+{"id":"img","nome":"Motor de Imagens","descricao":"Cria e processa imagens a partir de código.","formatos":["svg"],"nota":"v0: composição procedural em SVG. PNG/JPG/WEBP dependem de um rasterizador."}
